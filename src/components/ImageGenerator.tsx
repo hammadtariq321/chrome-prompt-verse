@@ -80,28 +80,29 @@ const ImageGenerator = () => {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const data = await response.json();
-      console.log('API Response:', data);
+      // Handle binary response - convert to blob and create object URL
+      const blob = await response.blob();
+      console.log('Received image blob:', blob);
 
-      if (data.url) {
-        setGeneratedImage(data.url);
-        
-        // Add to history
-        const historyItem: HistoryItem = {
-          id: Date.now().toString(),
-          prompt,
-          style,
-          aspect_ratio: aspectRatio,
-          imageUrl: data.url,
-          timestamp: new Date(),
-        };
-        
-        setHistory(prev => [historyItem, ...prev.slice(0, 9)]); // Keep last 10 items
-        
-        toast.success('Image generated successfully!');
-      } else {
-        throw new Error('No image URL in response');
-      }
+      // Create a local URL for the image
+      const imageUrl = URL.createObjectURL(blob);
+      console.log('Created image URL:', imageUrl);
+
+      setGeneratedImage(imageUrl);
+      
+      // Add to history
+      const historyItem: HistoryItem = {
+        id: Date.now().toString(),
+        prompt,
+        style,
+        aspect_ratio: aspectRatio,
+        imageUrl: imageUrl,
+        timestamp: new Date(),
+      };
+      
+      setHistory(prev => [historyItem, ...prev.slice(0, 9)]); // Keep last 10 items
+      
+      toast.success('Image generated successfully!');
     } catch (error) {
       console.error('Error generating image:', error);
       toast.error('Failed to generate image. Please try again.');
