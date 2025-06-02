@@ -8,7 +8,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Sparkles, Wand2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
 import GeneratedImage from './GeneratedImage';
 import PromptHistory from './PromptHistory';
 import Header from './Header';
@@ -40,30 +39,12 @@ const ImageGenerator = () => {
     setIsGenerating(true);
     
     try {
-      console.log('Starting image generation with prompt:', prompt);
+      // Simulate image generation for now
+      await new Promise(resolve => setTimeout(resolve, 3000));
       
-      const { data, error } = await supabase.functions.invoke('generate-image', {
-        body: {
-          prompt: prompt.trim(),
-          style,
-          aspect_ratio: aspectRatio
-        }
-      });
-
-      if (error) {
-        console.error('Supabase function error:', error);
-        throw error;
-      }
-
-      if (data.error) {
-        console.error('Image generation error:', data.error);
-        throw new Error(data.error);
-      }
-
-      console.log('Image generated successfully');
-      
-      const imageUrl = data.image;
-      setGeneratedImageUrl(imageUrl);
+      // For demo purposes, using a placeholder image
+      const mockImageUrl = `https://picsum.photos/512/512?random=${Date.now()}`;
+      setGeneratedImageUrl(mockImageUrl);
       
       // Add to history
       const newHistoryItem: HistoryItem = {
@@ -71,7 +52,7 @@ const ImageGenerator = () => {
         prompt,
         style,
         aspect_ratio: aspectRatio,
-        imageUrl,
+        imageUrl: mockImageUrl,
         timestamp: new Date(),
       };
       
@@ -80,7 +61,7 @@ const ImageGenerator = () => {
       toast.success('Image generated successfully!');
     } catch (error) {
       console.error('Error generating image:', error);
-      toast.error('Failed to generate image. Please try again.');
+      toast.error('Failed to generate image');
     } finally {
       setIsGenerating(false);
     }
