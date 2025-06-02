@@ -36,12 +36,12 @@ const ImageGenerator = () => {
   const styles = [
     { value: 'realistic', label: 'Realistic' },
     { value: 'anime', label: 'Anime' },
-    { value: 'cyberpunk', label: 'Cyberpunk' },
-    { value: 'fantasy', label: 'Fantasy' },
-    { value: 'abstract', label: 'Abstract' },
-    { value: 'oil_painting', label: 'Oil Painting' },
-    { value: 'watercolor', label: 'Watercolor' },
-    { value: 'sketch', label: 'Sketch' },
+    // { value: 'cyberpunk', label: 'Cyberpunk' },
+    // { value: 'fantasy', label: 'Fantasy' },
+    // { value: 'abstract', label: 'Abstract' },
+    // { value: 'oil_painting', label: 'Oil Painting' },
+    // { value: 'watercolor', label: 'Watercolor' },
+    // { value: 'sketch', label: 'Sketch' },
   ];
 
   const aspectRatios = [
