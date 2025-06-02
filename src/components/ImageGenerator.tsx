@@ -1,17 +1,20 @@
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
-import { Sparkles, Wand2 } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
+import { Loader2, Download, Sparkles } from 'lucide-react';
 import GeneratedImage from './GeneratedImage';
 import PromptHistory from './PromptHistory';
-import Header from './Header';
-import AuthGuard from './AuthGuard';
+
+interface GenerationParams {
+  prompt: string;
+  style: string;
+  aspect_ratio: string;
+}
 
 interface HistoryItem {
   id: string;
@@ -27,41 +30,82 @@ const ImageGenerator = () => {
   const [style, setStyle] = useState('realistic');
   const [aspectRatio, setAspectRatio] = useState('1:1');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
+  const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
+
+  const styles = [
+    { value: 'realistic', label: 'Realistic' },
+    { value: 'anime', label: 'Anime' },
+    { value: 'cyberpunk', label: 'Cyberpunk' },
+    { value: 'fantasy', label: 'Fantasy' },
+    { value: 'abstract', label: 'Abstract' },
+    { value: 'oil_painting', label: 'Oil Painting' },
+    { value: 'watercolor', label: 'Watercolor' },
+    { value: 'sketch', label: 'Sketch' },
+  ];
+
+  const aspectRatios = [
+    { value: '1:1', label: 'Square (1:1)' },
+    { value: '16:9', label: 'Landscape (16:9)' },
+    { value: '9:16', label: 'Portrait (9:16)' },
+    { value: '4:3', label: 'Classic (4:3)' },
+    { value: '3:2', label: 'Photo (3:2)' },
+  ];
 
   const generateImage = async () => {
     if (!prompt.trim()) {
-      toast.error('Please enter a prompt');
+      toast.error('Please enter a prompt!');
       return;
     }
 
     setIsGenerating(true);
     
     try {
-      // Simulate image generation for now
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      
-      // For demo purposes, using a placeholder image
-      const mockImageUrl = `https://picsum.photos/512/512?random=${Date.now()}`;
-      setGeneratedImageUrl(mockImageUrl);
+      const formData = new FormData();
+      formData.append('prompt', prompt);
+      formData.append('style', style);
+      formData.append('aspect_ratio', aspectRatio);
+
+      console.log('Generating image with params:', { prompt, style, aspect_ratio: aspectRatio });
+
+      const response = await fetch('https://api.vyro.ai/v2/image/generations', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer vk-0D9s1vv2gWQHM2ln3D0jpuIzYUtVb3rI81L98F2Gm2S7xc',
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      // Handle binary response - convert to blob and create object URL
+      const blob = await response.blob();
+      console.log('Received image blob:', blob);
+
+      // Create a local URL for the image
+      const imageUrl = URL.createObjectURL(blob);
+      console.log('Created image URL:', imageUrl);
+
+      setGeneratedImage(imageUrl);
       
       // Add to history
-      const newHistoryItem: HistoryItem = {
+      const historyItem: HistoryItem = {
         id: Date.now().toString(),
         prompt,
         style,
         aspect_ratio: aspectRatio,
-        imageUrl: mockImageUrl,
+        imageUrl: imageUrl,
         timestamp: new Date(),
       };
       
-      setHistory(prev => [newHistoryItem, ...prev]);
+      setHistory(prev => [historyItem, ...prev.slice(0, 9)]); // Keep last 10 items
       
       toast.success('Image generated successfully!');
     } catch (error) {
       console.error('Error generating image:', error);
-      toast.error('Failed to generate image');
+      toast.error('Failed to generate image. Please try again.');
     } finally {
       setIsGenerating(false);
     }
@@ -71,115 +115,127 @@ const ImageGenerator = () => {
     setPrompt(item.prompt);
     setStyle(item.style);
     setAspectRatio(item.aspect_ratio);
-    setGeneratedImageUrl(item.imageUrl);
+    setGeneratedImage(item.imageUrl);
   };
 
   return (
-    <AuthGuard>
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/10">
-        <Header />
-        
-        <div className="container mx-auto p-6 space-y-8">
-          {/* Header */}
-          <div className="text-center space-y-4">
-            <h1 className="text-4xl md:text-6xl font-orbitron font-bold text-cyber-primary cyber-glow">
-              AI Image Generator
-            </h1>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Transform your imagination into stunning visuals with the power of artificial intelligence
-            </p>
-          </div>
+    <div className="min-h-screen bg-cyber-darker p-4">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-6xl font-orbitron font-bold bg-gradient-to-r from-cyber-primary via-cyber-secondary to-cyber-accent bg-clip-text text-transparent mb-4">
+            AI IMAGE FORGE
+          </h1>
+          <p className="text-xl text-cyber-primary/80 font-rajdhani">
+            Generate stunning visuals with futuristic AI technology
+          </p>
+          <div className="w-24 h-1 bg-gradient-to-r from-cyber-primary to-cyber-secondary mx-auto mt-4 rounded-full"></div>
+        </div>
 
-          {/* Main Content */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Controls Panel */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Generation Form */}
+          <div className="lg:col-span-1">
             <Card className="cyber-glow bg-card/50 backdrop-blur-sm">
               <CardHeader>
                 <CardTitle className="text-2xl font-orbitron text-cyber-primary flex items-center gap-2">
-                  <Wand2 className="w-6 h-6" />
-                  Create Your Vision
+                  <Sparkles className="w-6 h-6" />
+                  Create Image
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="prompt" className="text-lg font-semibold text-foreground">
-                    Describe your image
+                  <Label htmlFor="prompt" className="text-cyber-primary font-semibold">
+                    Prompt
                   </Label>
-                  <Textarea
+                  <Input
                     id="prompt"
-                    placeholder="A cyberpunk cityscape at night with neon lights reflecting on wet streets..."
                     value={prompt}
                     onChange={(e) => setPrompt(e.target.value)}
-                    className="min-h-[120px] cyber-glow bg-background/50 resize-none"
+                    placeholder="Describe your vision..."
+                    className="cyber-glow bg-background/50 border-cyber-primary/30 text-foreground placeholder:text-muted-foreground"
+                    disabled={isGenerating}
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="style" className="text-sm font-medium text-foreground">
-                      Art Style
-                    </Label>
-                    <Select value={style} onValueChange={setStyle}>
-                      <SelectTrigger className="cyber-glow bg-background/50">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="realistic">Realistic</SelectItem>
-                        <SelectItem value="artistic">Artistic</SelectItem>
-                        <SelectItem value="anime">Anime</SelectItem>
-                        <SelectItem value="cyberpunk">Cyberpunk</SelectItem>
-                        <SelectItem value="fantasy">Fantasy</SelectItem>
-                        <SelectItem value="abstract">Abstract</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="style" className="text-cyber-primary font-semibold">
+                    Style
+                  </Label>
+                  <Select value={style} onValueChange={setStyle} disabled={isGenerating}>
+                    <SelectTrigger className="cyber-glow bg-background/50 border-cyber-primary/30">
+                      <SelectValue placeholder="Select style" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-card border-cyber-primary/30">
+                      {styles.map((s) => (
+                        <SelectItem 
+                          key={s.value} 
+                          value={s.value}
+                          className="text-foreground hover:bg-cyber-primary/20"
+                        >
+                          {s.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="aspectRatio" className="text-sm font-medium text-foreground">
-                      Aspect Ratio
-                    </Label>
-                    <Select value={aspectRatio} onValueChange={setAspectRatio}>
-                      <SelectTrigger className="cyber-glow bg-background/50">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="1:1">Square (1:1)</SelectItem>
-                        <SelectItem value="16:9">Landscape (16:9)</SelectItem>
-                        <SelectItem value="9:16">Portrait (9:16)</SelectItem>
-                        <SelectItem value="4:3">Classic (4:3)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="aspect-ratio" className="text-cyber-primary font-semibold">
+                    Aspect Ratio
+                  </Label>
+                  <Select value={aspectRatio} onValueChange={setAspectRatio} disabled={isGenerating}>
+                    <SelectTrigger className="cyber-glow bg-background/50 border-cyber-primary/30">
+                      <SelectValue placeholder="Select aspect ratio" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-card border-cyber-primary/30">
+                      {aspectRatios.map((ar) => (
+                        <SelectItem 
+                          key={ar.value} 
+                          value={ar.value}
+                          className="text-foreground hover:bg-cyber-primary/20"
+                        >
+                          {ar.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <Button
                   onClick={generateImage}
                   disabled={isGenerating || !prompt.trim()}
-                  className="w-full bg-gradient-to-r from-cyber-primary to-cyber-secondary hover:from-cyber-primary/90 hover:to-cyber-secondary/90 text-black font-bold text-lg py-6 cyber-glow"
+                  className="w-full cyber-button bg-gradient-to-r from-cyber-primary/20 to-cyber-secondary/20 hover:from-cyber-primary/30 hover:to-cyber-secondary/30 text-white font-bold py-3 text-lg font-orbitron"
                 >
-                  <Sparkles className="w-5 h-5 mr-2" />
-                  {isGenerating ? 'Generating...' : 'Generate Image'}
+                  {isGenerating ? (
+                    <>
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                      GENERATING...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-5 h-5 mr-2" />
+                      GENERATE IMAGE
+                    </>
+                  )}
                 </Button>
               </CardContent>
             </Card>
-
-            {/* Generated Image */}
-            <GeneratedImage 
-              imageUrl={generatedImageUrl} 
-              isGenerating={isGenerating} 
-            />
           </div>
 
-          {/* History */}
-          {history.length > 0 && (
-            <PromptHistory 
-              history={history} 
-              onSelect={handleHistorySelect} 
-            />
-          )}
+          {/* Generated Image */}
+          <div className="lg:col-span-2">
+            <GeneratedImage imageUrl={generatedImage} isGenerating={isGenerating} />
+          </div>
         </div>
+
+        {/* History */}
+        {history.length > 0 && (
+          <div className="mt-12">
+            <PromptHistory history={history} onSelect={handleHistorySelect} />
+          </div>
+        )}
       </div>
-    </AuthGuard>
+    </div>
   );
 };
 
