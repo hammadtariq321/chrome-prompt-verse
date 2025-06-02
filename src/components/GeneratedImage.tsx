@@ -15,19 +15,31 @@ const GeneratedImage: React.FC<GeneratedImageProps> = ({ imageUrl, isGenerating 
     if (!imageUrl) return;
 
     try {
-      const response = await fetch(imageUrl);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `ai-generated-${Date.now()}.jpg`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      window.URL.revokeObjectURL(url);
-      toast.success('Image downloaded successfully!');
+      // Handle base64 images
+      if (imageUrl.startsWith('data:image')) {
+        const link = document.createElement('a');
+        link.href = imageUrl;
+        link.download = `ai-generated-${Date.now()}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast.success('Image downloaded successfully!');
+      } else {
+        // Handle regular URLs
+        const response = await fetch(imageUrl);
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `ai-generated-${Date.now()}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        window.URL.revokeObjectURL(url);
+        toast.success('Image downloaded successfully!');
+      }
     } catch (error) {
       console.error('Error downloading image:', error);
       toast.error('Failed to download image');
@@ -81,6 +93,10 @@ const GeneratedImage: React.FC<GeneratedImageProps> = ({ imageUrl, isGenerating 
               className="max-w-full max-h-[600px] object-contain rounded-lg cyber-glow shadow-2xl"
               style={{
                 filter: 'drop-shadow(0 0 20px rgba(0, 255, 255, 0.3))',
+              }}
+              onError={(e) => {
+                console.error('Image failed to load:', imageUrl);
+                toast.error('Failed to load generated image');
               }}
             />
           </div>
