@@ -68,6 +68,7 @@ const ImageGenerator = () => {
 
       console.log('Generating image with params:', { prompt, style, aspect_ratio: aspectRatio });
 
+      
       const response = await fetch('https://api.vyro.ai/v2/image/generations', {
         method: 'POST',
         headers: {
